@@ -159,10 +159,11 @@ async function openDiagram(arg) {
   const key = doc.uri.toString();
   const have = diagrams.get(key);
   if (have) { have.panel.reveal(vscode.ViewColumn.Beside, true); return have; }
+  let pickedKind = '';
   if (!docKind(doc)) {
     const pick = await vscode.window.showQuickPick([{ label: 'DBML', k: 'dbml' }, { label: 'SQL DDL', k: 'sql' }, { label: 'Prisma schema', k: 'prisma' }], { title: `Read ${baseName(doc.uri)} as` });
     if (!pick) return undefined;
-    doc.__dbmlKind = pick.k;
+    pickedKind = pick.k; // TextDocument objects are frozen: keep the choice on the Diagram, not on the document
   }
   const media = vscode.Uri.joinPath(ctx.extensionUri, 'media');
   const panel = vscode.window.createWebviewPanel(VIEW_TYPE, `ER Diagram: ${baseName(doc.uri)}`, { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
@@ -177,7 +178,7 @@ async function openDiagram(arg) {
     showSupportLinks: showLinks(vscode, PREFIX),
   });
   const d = new Diagram(doc, panel);
-  if (doc.__dbmlKind) d.kind = doc.__dbmlKind;
+  if (pickedKind) d.kind = pickedKind;
   diagrams.set(key, d);
   activeDiagram = d;
   panel.onDidChangeViewState(() => { if (panel.active) activeDiagram = d; });

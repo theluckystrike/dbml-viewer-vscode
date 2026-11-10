@@ -95,6 +95,19 @@ test('the diagram follows edits; dragged positions are kept per file; Reset layo
   } finally { s.restore(); }
 });
 
+test('a schema in a file with another extension: the reader pick works on a frozen TextDocument', async () => {
+  const s = loadExtension();
+  try {
+    s.ext.activate(s.context);
+    const TXT = file('schema.txt', SAMPLE);
+    s.ui.quick.push((items) => items.find((x) => x.k === 'dbml'));
+    const p = await openDiagram(s, TXT);
+    const m = await until(() => p && p.posted.find((x) => x.type === 'model'));
+    assert.ok(m, 'the diagram got a model');
+    assert.strictEqual(m.model.tables.length, 6);
+  } finally { s.restore(); }
+});
+
 test('problems follow edits on a frozen TextDocument (the real host does not allow new properties)', async () => {
   const s = loadExtension();
   try {
