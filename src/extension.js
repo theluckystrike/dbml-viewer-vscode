@@ -330,6 +330,14 @@ async function runTool(tool, from) {
   return undefined;
 }
 
+/** Column for a result file: the column of the schema's text editor (else the first one), so the diagram beside
+ *  it stays visible and repeated exports do not open a new editor group each time. */
+function resultColumn(src) {
+  const k = src && src.uri ? src.uri.toString() : '';
+  const ed = (vscode.window.visibleTextEditors || []).find((e) => e.document && e.document.uri.toString() === k);
+  return (ed && ed.viewColumn) || vscode.ViewColumn.One;
+}
+
 async function exportSql(from) {
   if (!(await pro.allowed('sql'))) return;
   let src;
@@ -349,7 +357,7 @@ async function exportSql(from) {
   await vscode.workspace.fs.writeFile(target, Buffer.from(text, 'utf8'));
   await pro.produced('sql');
   if (model.errors.length) vscode.window.setStatusBarMessage(`${model.errors.length} line${model.errors.length === 1 ? '' : 's'} of ${src.name} could not be read and are not in the export.`, 8000);
-  await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Beside });
+  await vscode.window.showTextDocument(target, { preview: false, viewColumn: resultColumn(src) });
   refreshPro();
 }
 
@@ -388,9 +396,10 @@ async function exportImage(from) {
     }
   } catch (e) { vscode.window.showWarningMessage(`The export did not work: ${e.message}`); return; }
   await vscode.workspace.fs.writeFile(target, data);
+  // the "Saved" line goes first so the try count of Zovo Pro (shown by produced) is the one on top
+  if (pick.k !== 'md') vscode.window.setStatusBarMessage(`Saved ${baseName(target)} (${Math.max(1, Math.round(data.length / 1024))} KB).`, 8000);
   await pro.produced('image');
-  if (pick.k === 'md') await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Beside });
-  else vscode.window.setStatusBarMessage(`Saved ${baseName(target)} (${Math.max(1, Math.round(data.length / 1024))} KB).`, 8000);
+  if (pick.k === 'md') await vscode.window.showTextDocument(target, { preview: false, viewColumn: resultColumn(src) });
   refreshPro();
 }
 
@@ -416,7 +425,7 @@ async function compareSchemas(from) {
   const sql = diff.migration(d, A, B, dl.k);
   const md = diff.report(d, baseName(pick[0]), src.name, sql, dl.k);
   const doc = await vscode.workspace.openTextDocument({ language: 'markdown', content: md });
-  await vscode.window.showTextDocument(doc, { preview: false, viewColumn: vscode.ViewColumn.Beside });
+  await vscode.window.showTextDocument(doc, { preview: false, viewColumn: resultColumn(src) });
   await pro.produced('diff');
   refreshPro();
 }
