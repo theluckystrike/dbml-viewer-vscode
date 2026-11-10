@@ -463,10 +463,17 @@ function activate(context) {
   context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration(`${PREFIX}.showProTools`)) refreshPro(); }));
   context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider({ language: 'dbml' }, symbolProvider));
   context.subscriptions.push(vscode.languages.registerDefinitionProvider({ language: 'dbml' }, definitionProvider));
+  const diagTimers = new Map();
+  context.subscriptions.push({ dispose: () => { for (const t of diagTimers.values()) clearTimeout(t); diagTimers.clear(); } });
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e) => {
     const d = diagrams.get(e.document.uri.toString());
     if (d && e.contentChanges.length) d.schedule();
-    if (docKind(e.document) === 'dbml') { clearTimeout(e.document.__dbmlDiag); e.document.__dbmlDiag = setTimeout(() => updateDiagnostics(e.document), 400); }
+    if (docKind(e.document) === 'dbml') {
+      // TextDocument objects are frozen in the real host: keep the debounce timers in a Map
+      const k = e.document.uri.toString();
+      clearTimeout(diagTimers.get(k));
+      diagTimers.set(k, setTimeout(() => { diagTimers.delete(k); updateDiagnostics(e.document); }, 400));
+    }
     if (vscode.window.activeTextEditor && e.document === vscode.window.activeTextEditor.document) updateSqlContext();
   }));
   context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((doc) => updateDiagnostics(doc)));

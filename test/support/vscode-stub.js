@@ -48,7 +48,7 @@ function create() {
       offsetAt(p) { return lines().slice(0, p.line).reduce((a, l) => a + l.length + 1, 0) + p.character; },
       getWordRangeAtPosition(p, re) { const l = lines()[p.line] || ''; const g = new RegExp(re.source, 'g'); let m; while ((m = g.exec(l))) { if (p.character >= m.index && p.character <= m.index + m[0].length) return new Range(p.line, m.index, p.line, m.index + m[0].length); if (!m[0].length) g.lastIndex++; } return undefined; },
     };
-    return doc;
+    return Object.preventExtensions(doc); // the real host freezes TextDocument objects
   }
   function setText(doc, text) { doc.text = text; doc.version = ++version; for (const f of listeners.change) f({ document: doc, contentChanges: [{ text }] }); }
   const panels = [];

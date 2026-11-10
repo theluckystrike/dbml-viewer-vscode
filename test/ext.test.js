@@ -95,6 +95,22 @@ test('the diagram follows edits; dragged positions are kept per file; Reset layo
   } finally { s.restore(); }
 });
 
+test('problems follow edits on a frozen TextDocument (the real host does not allow new properties)', async () => {
+  const s = loadExtension();
+  try {
+    s.ext.activate(s.context);
+    const doc = await s.vscode.workspace.openTextDocument(s.vscode.Uri.file(BAD));
+    await until(() => s.diags.get(BAD) && s.diags.get(BAD).length === 2);
+    assert.ok(!Object.isExtensible(doc));
+    s.setText(doc, 'Table a {\n  id int [pk]\n}\n');
+    const d = await until(() => s.diags.get(BAD) && s.diags.get(BAD).length === 0 && s.diags.get(BAD), 3000);
+    assert.ok(d, 'the 2 problems are gone after the fix is typed');
+    s.setText(doc, 'Tabel a { }\n');
+    const d2 = await until(() => s.diags.get(BAD) && s.diags.get(BAD).length === 1 && s.diags.get(BAD), 3000);
+    assert.strictEqual(d2[0].range.start.line, 0);
+  } finally { s.restore(); }
+});
+
 test('problems with line and column, outline and go to definition for DBML', async () => {
   const s = loadExtension();
   try {
