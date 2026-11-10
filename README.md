@@ -8,12 +8,12 @@ A DBML viewer that draws your schema as an ER diagram beside the editor and redr
 
 ## What you get
 
-- **Live DBML preview.** Open a `.dbml` file and click the diagram button in the editor title bar (or run **DBML Viewer: Open ER Diagram**). Tables show their columns and types with PK, FK, unique and not-null markers; enums and sticky notes have their own boxes.
-- **Relations with crow's foot ends.** One-to-one, one-to-many and many-to-many lines are routed at right angles. Hover a line to highlight both columns and see the relation and its `ON DELETE` action.
-- **Automatic layout you can change.** Referenced tables sit on the left and the tables that point at them on the right, with no overlaps. Drag a table to move it; the positions are kept for each file. **Reset layout** starts over. Schemas with 200 tables or more get a grid ordered by relation.
-- **Find your way.** Zoom with Ctrl or Cmd + scroll, pan by dragging the background, **Fit** to see everything, search a table by name, and click a table or a column to jump to its line.
-- **Colors.** `headercolor` on a table, or one color per `TableGroup`. Light, dark and high contrast themes.
-- **Copy SVG.** Puts the diagram on the clipboard as an SVG image, for docs and pull requests.
+- Live DBML preview. Open a `.dbml` file and click the diagram button in the editor title bar (or run DBML Viewer: Open ER Diagram). Tables show their columns and types with PK, FK, unique and not-null markers; enums and sticky notes have their own boxes.
+- Relations with crow's foot ends. One-to-one, one-to-many and many-to-many lines are routed at right angles. Hover a line to highlight both columns and see the relation and its `ON DELETE` action.
+- Automatic layout you can change. Referenced tables sit on the left and the tables that point at them on the right, with no overlaps. Drag a table to move it; the positions are kept for each file. Reset layout starts over. Schemas with 200 tables or more get a grid ordered by relation.
+- Find your way. Zoom with Ctrl or Cmd + scroll, pan by dragging the background, Fit to see everything, search a table by name, and click a table or a column to jump to its line.
+- Colors. `headercolor` on a table, or one color per `TableGroup`. Light, dark and high contrast themes.
+- Copy SVG. Puts the diagram on the clipboard as an SVG image, for docs and pull requests.
 
 ### SQL to ER diagram
 
@@ -37,9 +37,9 @@ Three tools for database work are part of Zovo Pro. Each has 3 free tries on you
 | Tool | Free | Zovo Pro |
 |---|---|---|
 | Live ER diagram for DBML, SQL and Prisma, layout, search, Copy SVG, DBML language support | yes | yes |
-| **Export SQL**: DBML to `CREATE TABLE` scripts for PostgreSQL, MySQL, SQL Server or SQLite (types, keys, indexes, enums, foreign keys, comments), and SQL DDL to DBML | 3 tries | yes |
-| **Export the diagram**: high-resolution PNG, SVG or a vector PDF, or a Markdown data dictionary (column, type, keys, nullable, default and note for every table) | 3 tries | yes |
-| **Schema diff**: compare two DBML or SQL files, list the tables, columns, indexes and relations added, removed and changed, and write the migration SQL (`ALTER TABLE ...`) for your database | 3 tries | yes |
+| Export SQL: DBML to `CREATE TABLE` scripts for PostgreSQL, MySQL, SQL Server or SQLite (types, keys, indexes, enums, foreign keys, comments), and SQL DDL to DBML | 3 tries | yes |
+| Export the diagram: high-resolution PNG, SVG or a vector PDF, or a Markdown data dictionary (column, type, keys, nullable, default and note for every table) | 3 tries | yes |
+| Schema diff: compare two DBML or SQL files, list the tables, columns, indexes and relations added, removed and changed, and write the migration SQL (`ALTER TABLE ...`) for your database | 3 tries | yes |
 
 ![Schema diff: two versions of a schema compared, with the migration SQL for PostgreSQL](images/schema-diff.png)
 

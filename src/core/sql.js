@@ -118,8 +118,18 @@ function parseSql(text) {
   // split into statements
   const stmts = [];
   let cur = [];
+  let depth = 0, closedTable = false;
+  // SQL Server scripts may leave out ; and GO between statements: a CREATE TABLE / ALTER TABLE whose ( ) is closed
+  // ends when a new statement keyword starts a line at depth 0.
+  const NEXT = new Set(['CREATE', 'ALTER', 'DROP', 'INSERT', 'UPDATE', 'DELETE', 'SET', 'USE', 'GRANT', 'COMMENT', 'EXEC', 'PRINT', 'IF', 'DECLARE']);
+  const isTableStmt = (c) => c.length > 1 && c[0].t === 'w' && /^(CREATE|ALTER)$/i.test(c[0].v) && c.slice(1, 8).some((x) => x.t === 'w' && /^TABLE$/i.test(x.v));
   for (const t of toks) {
-    if (t.t === 'end') { if (cur.length) stmts.push(cur); cur = []; continue; }
+    if (t.t === 'end') { if (cur.length) stmts.push(cur); cur = []; depth = 0; closedTable = false; continue; }
+    if (closedTable && depth === 0 && t.t === 'w' && NEXT.has(t.v.toUpperCase()) && cur.length && cur[cur.length - 1].line < t.line && isTableStmt(cur)) {
+      stmts.push(cur); cur = []; closedTable = false;
+    }
+    if (t.t === 'p' && t.v === '(') depth++;
+    else if (t.t === 'p' && t.v === ')' && depth > 0) { depth--; if (depth === 0) closedTable = true; }
     cur.push(t);
   }
   if (cur.length) stmts.push(cur);
@@ -247,8 +257,21 @@ function parseSql(text) {
     for (const it of g.items) {
       if (!it.length) continue;
       const head = it[0].t === 'w' ? it[0].v.toUpperCase() : '';
-      if (TABLE_ITEM.has(head) && !((head === 'KEY' || head === 'INDEX' || head === 'PERIOD' || head === 'CHECK') && isTypeWord(it[1]))) { tableConstraint(table, it); continue; }
+      // FULLTEXT / SPATIAL start an index only when KEY, INDEX or a column list follows (a column may be called "fulltext")
+      const ftCol = (head === 'FULLTEXT' || head === 'SPATIAL') && !(it[1] && ((it[1].t === 'w' && /^(KEY|INDEX)$/i.test(it[1].v)) || (it[1].t === 'p' && it[1].v === '(') || (it[2] && it[2].t === 'p' && it[2].v === '(')));
+      if (TABLE_ITEM.has(head) && !ftCol && !((head === 'KEY' || head === 'INDEX' || head === 'PERIOD' || head === 'CHECK') && isTypeWord(it[1]))) { tableConstraint(table, it); continue; }
       column(table, it);
+    }
+    // PostgreSQL INHERITS (parent): the child has the parent's columns first (keys are not inherited)
+    if (W(g.next) === 'INHERITS' && st[g.next + 1] && st[g.next + 1].v === '(') {
+      const pq = qname(st, g.next + 2);
+      const parent = pq && findTable(nameToKey(pq.parts).key);
+      if (parent) {
+        const own = new Set(table.columns.map((c) => c.name.toLowerCase()));
+        const inh = parent.columns.filter((c) => !own.has(c.name.toLowerCase())).map((c) => ({ ...c, pk: false, increment: false, unique: false, fk: false, line: table.line, col: table.col, len: table.len }));
+        table.columns.unshift(...inh);
+        if (!table.note) table.note = `Inherits ${parent.name}.`;
+      }
     }
     // table options: COMMENT='...' (MySQL)
     for (let j = g.next; j < st.length; j++) if (st[j].t === 'w' && st[j].v.toUpperCase() === 'COMMENT') { const s = st[j + 1] && st[j + 1].v === '=' ? st[j + 2] : st[j + 1]; if (s && s.t === 's') table.note = s.v; }

@@ -130,7 +130,10 @@ test('HTML in names goes to the webview as data; the CSP has nonces and no remot
     assert.strictEqual(m.model.tables[0].name, XSS);
     const html = p.webview.html;
     assert.match(html, /default-src 'none'/);
-    assert.ok(!/unsafe-inline|unsafe-eval|https?:\/\//.test(html.replace(/http:\/\/www\.w3\.org/g, '')), 'no unsafe-inline, no remote origin');
+    const csp = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)[1];
+    assert.ok(!/unsafe-inline|unsafe-eval|https?:|\*/.test(csp), 'CSP: no unsafe-inline, no remote origin, no wildcard');
+    // remote loads: no src= or stylesheet href pointing outside the webview (support links are plain anchors)
+    assert.ok(!/(src|srcset)=["']?https?:/i.test(html) && !/<link[^>]+href=["']?https?:/i.test(html), 'no remote load');
     assert.strictEqual((html.match(/<script nonce="[^"]+" src=/g) || []).length, 2);
     assert.ok(!html.includes(XSS));
     const h = buildHtml({ cspSource: 'vscode-resource:', scriptUris: ['a.js'], styleUri: 's.css', title: XSS, nonce: 'n1' });

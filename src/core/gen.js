@@ -84,6 +84,25 @@ function toSql(model, dialect = 'postgres') {
   const after = [];
   const comments = [];
   const tables = model.tables;
+  // one-to-one: the foreign key columns must be unique in SQL, or the relation reads back as many-to-one
+  const uniqueCols = new Set(); // "tableKey\u0000col" for single columns
+  const uniqueSets = []; // { table, columns } for composite keys
+  for (const r of model.refs) {
+    if (r.rel !== '-') continue;
+    const fk = fkSide(r);
+    const t = tables.find((x) => x.key === fk.child.table);
+    if (!t) continue;
+    const cols = fk.child.columns;
+    const lc = cols.map((c) => String(c).toLowerCase());
+    const pk = t.columns.filter((c) => c.pk).map((c) => c.name.toLowerCase());
+    const already = (lc.length === 1 && t.columns.some((c) => c.name.toLowerCase() === lc[0] && (c.unique || (c.pk && pk.length === 1))))
+      || t.indexes.some((ix) => (ix.unique || ix.pk) && ix.columns.length === lc.length && ix.columns.every((c) => c.name && lc.includes(c.name.toLowerCase())))
+      || (pk.length === lc.length && pk.every((c) => lc.includes(c)));
+    if (already) continue;
+    if (cols.length === 1) uniqueCols.add(`${t.key}\u0000${cols[0]}`);
+    else uniqueSets.push({ table: t, columns: cols });
+  }
+  const usedNames = new Set(tables.map((t) => String(t.name).toLowerCase()));
   for (const t of tables) {
     const lines = [];
     const pkCols = t.columns.filter((c) => c.pk);
@@ -108,7 +127,7 @@ function toSql(model, dialect = 'postgres') {
         if (dialect === 'sqlite' && c.increment) s += ' AUTOINCREMENT';
       }
       if (c.notNull && !(inlinePk && pkList[0] === c.name)) s += ' NOT NULL';
-      if (c.unique && !c.pk) s += ' UNIQUE';
+      if ((c.unique && !c.pk) || uniqueCols.has(`${t.key}\u0000${c.name}`)) s += ' UNIQUE';
       if (c.dflt) s += ` DEFAULT ${dflt(c.dflt, dialect)}`;
       s += check;
       if (c.note && dialect === 'mysql') s += ` COMMENT ${sqlStr(c.note)}`;
@@ -139,14 +158,18 @@ function toSql(model, dialect = 'postgres') {
       after.push(`CREATE ${ix.unique ? 'UNIQUE ' : ''}INDEX ${D.q(name)} ON ${qTable(D, t)}${using} (${cols.join(', ')});`);
     });
   }
+  for (const u of uniqueSets) after.push(`CREATE UNIQUE INDEX ${D.q(`${slug(u.table.name)}_${u.columns.map(slug).join('_')}_one_to_one`)} ON ${qTable(D, u.table)} (${u.columns.map(D.q).join(', ')});`);
   // many-to-many: a junction table
   for (const r of model.refs) {
     if (r.rel !== '<>') continue;
     const a = model.tables.find((x) => x.key === r.from.table), b = model.tables.find((x) => x.key === r.to.table);
     if (!a || !b) continue;
-    const jt = `${slug(a.name)}_${slug(b.name)}`;
+    let jt = `${slug(a.name)}_${slug(b.name)}`;
+    for (let k = 2; usedNames.has(jt.toLowerCase()); k++) jt = `${slug(a.name)}_${slug(b.name)}_${k}`;
+    usedNames.add(jt.toLowerCase());
     const ca = r.from.columns.map((c) => ({ n: `${slug(a.name)}_${slug(c)}`, src: c, t: (a.columns.find((x) => x.name === c) || {}).type }));
     const cb = r.to.columns.map((c) => ({ n: `${slug(b.name)}_${slug(c)}`, src: c, t: (b.columns.find((x) => x.name === c) || {}).type }));
+    for (const c of cb) if (ca.some((x) => x.n === c.n)) c.n += '_2'; // a table related to itself
     const cols = [...ca, ...cb].map((c) => `  ${D.q(c.n)} ${mapType(c.t, dialect, null)} NOT NULL`);
     cols.push(`  PRIMARY KEY (${[...ca, ...cb].map((c) => D.q(c.n)).join(', ')})`);
     if (dialect === 'sqlite') {

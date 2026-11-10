@@ -148,7 +148,7 @@ function loadExtension() {
   try { stub.ext = require(path.join(root, 'extension.js')); } finally { Module._load = orig; }
   // later requires of vscode (lazy ones) still need the stub
   Module._load = function (req, parent, isMain) { if (req === 'vscode') return stub.vscode; return orig.call(this, req, parent, isMain); };
-  stub.restore = () => { Module._load = orig; };
+  stub.restore = () => { try { stub.ext.deactivate(); } catch { /* ignore */ } Module._load = orig; };
   return stub;
 }
 

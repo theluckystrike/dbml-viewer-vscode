@@ -63,15 +63,16 @@ function tokenize(text, model) {
       while (i < n && /[0-9A-Fa-f]/.test(text[i])) i++;
       push('c', text.slice(s, i), s, line, col); continue;
     }
-    if (ch === '<' && text[i + 1] === '>') { push('op', '<>', i, line, col); i += 2; continue; }
-    if (ch === '<' || ch === '>') { push('op', ch, i, line, col); i++; continue; }
+    // a relation may end with ? (an optional relation, written by the dbml exporter): same relation, ? dropped
+    if (ch === '<' && text[i + 1] === '>') { push('op', '<>', i, line, col); i += 2; if (text[i] === '?') i++; continue; }
+    if (ch === '<' || ch === '>') { push('op', ch, i, line, col); i++; if (text[i] === '?') i++; continue; }
     if (ch === '-') {
       if (/[0-9]/.test(text[i + 1] || '') && /[:\s(,[]/.test(prevNonSpace(text, i))) { // a negative number (default: -1)
         const s = i; i++;
         while (i < n && /[0-9.eE]/.test(text[i])) i++;
         push('n', text.slice(s, i), s, line, col); continue;
       }
-      push('op', '-', i, line, col); i++; continue;
+      push('op', '-', i, line, col); i++; if (text[i] === '?') i++; continue;
     }
     if (/[0-9]/.test(ch)) {
       const s = i;
@@ -79,6 +80,7 @@ function tokenize(text, model) {
       if (i < n && isWord(text[i])) { while (i < n && isWord(text[i])) i++; push('id', text.slice(s, i), s, line, col); continue; }
       push('n', text.slice(s, i), s, line, col); continue;
     }
+    if (ch === '?' && /[<>-]/.test(text[i + 1] || '')) { i++; continue; } // ?< ?> ?- : optional relation side
     if ('{}[](),:.~;'.includes(ch)) { push('p', ch, i, line, col); i++; continue; }
     if (isWord(ch)) {
       const s = i;
@@ -397,6 +399,7 @@ function parseDbml(text) {
       if (isKw('note') && (is('p', ':', 1) || is('p', '{', 1))) { i++; const v = noteBlockValue(); table.note = v || ''; continue; }
       if (isKw('indexes') && is('p', '{', 1)) { i++; parseIndexes(table); continue; }
       if (is('p', '~')) { i++; const p = nameTok(); if (p) pendingInject.push({ table, name: p.v, at: table.columns.length, tok: p }); else err(peek(), 'Expected a TablePartial name after ~.'); skipToEol(); continue; }
+      if (isKw('checks') && is('p', '{', 1)) { const t = next(); addSkipped(model, t.line, `checks block in table ${name} (not drawn)`); skipLineOrBlock(); continue; }
       if (isKw('records') && is('p', '{', 1)) { const t = next(); addSkipped(model, t.line, 'records block (sample rows)'); skipLineOrBlock(); continue; }
       const ct = nameTok();
       if (!ct) { err(peek(), `Expected a column name in table "${name}", found "${tokText(peek())}".`); skipLineOrBlock(); continue; }

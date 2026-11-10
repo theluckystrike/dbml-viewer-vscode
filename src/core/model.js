@@ -45,6 +45,8 @@ function makeResolver(model) {
   const exact = new Map();
   const lower = new Map();
   const byName = new Map();
+  const inDefault = new Map(); // tables with no schema or the default one, by lower-case name
+  for (const t of model.tables) if ((!t.schema || DEFAULT_SCHEMAS.has(String(t.schema).toLowerCase())) && !inDefault.has(t.name.toLowerCase())) inDefault.set(t.name.toLowerCase(), t);
   const add = (k, t) => { if (!exact.has(k)) exact.set(k, t); const l = k.toLowerCase(); if (!lower.has(l)) lower.set(l, t); };
   for (const t of model.tables) {
     add(t.key, t);
@@ -59,6 +61,8 @@ function makeResolver(model) {
     const w = String(written);
     if (exact.has(w)) return exact.get(w);
     if (lower.has(w.toLowerCase())) return lower.get(w.toLowerCase());
+    const m = /^"?(public|dbo|main)"?\.(.+)$/i.exec(w); // the default schema written out: public.users = users
+    if (m && !m[2].includes('.')) { const t = inDefault.get(m[2].replace(/^"|"$/g, '').toLowerCase()); if (t) return t; }
     const dot = w.lastIndexOf('.');
     const bare = (dot >= 0 ? w.slice(dot + 1) : w).toLowerCase();
     const list = byName.get(bare);
