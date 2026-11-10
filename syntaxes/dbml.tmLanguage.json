@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "DBML",
+  "scopeName": "source.dbml",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#blocks" },
+    { "include": "#settings" },
+    { "include": "#relations" },
+    { "include": "#constants" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.dbml", "match": "//.*$" },
+        { "name": "comment.block.dbml", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        { "name": "string.quoted.triple.dbml", "begin": "'''", "end": "'''", "patterns": [{ "name": "constant.character.escape.dbml", "match": "\\\\." }] },
+        { "name": "string.quoted.single.dbml", "begin": "'", "end": "'|$", "patterns": [{ "name": "constant.character.escape.dbml", "match": "\\\\." }] },
+        { "name": "variable.other.quoted.dbml", "begin": "\"", "end": "\"|$" },
+        { "name": "string.interpolated.expression.dbml", "begin": "`", "end": "`|$" }
+      ]
+    },
+    "blocks": {
+      "patterns": [
+        {
+          "match": "(?i)^\\s*(table|tablepartial)\\s+((?:\"[^\"]*\"|[\\w$]+)(?:\\.(?:\"[^\"]*\"|[\\w$]+))?)(?:\\s+(as)\\s+(\"[^\"]*\"|[\\w$]+))?",
+          "captures": { "1": { "name": "keyword.other.table.dbml" }, "2": { "name": "entity.name.type.table.dbml" }, "3": { "name": "keyword.other.as.dbml" }, "4": { "name": "entity.name.type.alias.dbml" } }
+        },
+        {
+          "match": "(?i)^\\s*(enum)\\s+((?:\"[^\"]*\"|[\\w$]+)(?:\\.(?:\"[^\"]*\"|[\\w$]+))?)",
+          "captures": { "1": { "name": "keyword.other.enum.dbml" }, "2": { "name": "entity.name.type.enum.dbml" } }
+        },
+        {
+          "match": "(?i)^\\s*(tablegroup|project|note)\\s+(\"[^\"]*\"|[\\w$.]+)?",
+          "captures": { "1": { "name": "keyword.other.block.dbml" }, "2": { "name": "entity.name.namespace.dbml" } }
+        },
+        {
+          "match": "(?i)^\\s*(ref)\\b\\s*(\"[^\"]*\"|[\\w$]+)?",
+          "captures": { "1": { "name": "keyword.other.ref.dbml" }, "2": { "name": "entity.name.function.ref.dbml" } }
+        },
+        { "match": "(?i)^\\s*(indexes|records)\\b", "captures": { "1": { "name": "keyword.other.indexes.dbml" } } },
+        { "match": "(?i)^\\s*(note)\\s*(?=:)", "captures": { "1": { "name": "keyword.other.note.dbml" } } },
+        { "match": "(?i)^\\s*(database_type)\\s*(?=:)", "captures": { "1": { "name": "variable.other.property.dbml" } } },
+        {
+          "match": "^\\s*(\"[^\"]*\"|[\\w$]+)\\s+((?:\"[^\"]*\"|[\\w$.]+)(?:\\([^)]*\\))?(?:\\[\\])?)(?=\\s*(\\[|$|//))",
+          "captures": { "1": { "name": "variable.other.member.column.dbml" }, "2": { "name": "support.type.dbml" } }
+        }
+      ]
+    },
+    "settings": {
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": { "0": { "name": "punctuation.definition.settings.begin.dbml" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.settings.end.dbml" } },
+      "patterns": [
+        { "include": "#strings" },
+        { "include": "#relations" },
+        { "name": "keyword.other.setting.dbml", "match": "(?i)\\b(pk|primary key|increment|unique|not null|null|default|note|ref|name|type|headercolor|color|delete|update|check)\\b" },
+        { "name": "constant.language.action.dbml", "match": "(?i)\\b(cascade|restrict|set null|set default|no action|btree|hash|gin|gist|brin)\\b" },
+        { "include": "#constants" }
+      ]
+    },
+    "relations": {
+      "patterns": [
+        { "name": "keyword.operator.relation.dbml", "match": "<>|(?<![\\w-])[<>-](?![\\w>])" }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        { "name": "constant.other.color.dbml", "match": "#[0-9A-Fa-f]{3,8}\\b" },
+        { "name": "constant.numeric.dbml", "match": "(?<![\\w.])-?\\d+(\\.\\d+)?\\b" },
+        { "name": "constant.language.dbml", "match": "(?i)\\b(true|false|null)\\b" }
+      ]
+    }
+  }
+}

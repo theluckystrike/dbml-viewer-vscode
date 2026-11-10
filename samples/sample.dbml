@@ -1,0 +1,82 @@
+// A small online shop, written for the DBML Viewer & ER Diagram walkthrough.
+// Click a table to jump to its line. Drag tables to arrange them; the layout is saved for this file.
+
+Project shop {
+  database_type: 'PostgreSQL'
+  Note: 'Orders, products and the people who buy them.'
+}
+
+Enum order_status {
+  created [note: 'Waiting for payment']
+  paid
+  shipped
+  cancelled
+}
+
+Table users as U {
+  id integer [pk, increment]
+  email varchar(255) [not null, unique]
+  full_name varchar(120)
+  country_code char(2) [ref: > countries.code]
+  created_at timestamp [default: `now()`]
+  Note: 'People who can sign in and place orders'
+}
+
+Table countries {
+  code char(2) [pk]
+  name varchar(80) [not null]
+  continent varchar(20)
+}
+
+Table merchants {
+  id integer [pk, increment]
+  name varchar(120) [not null]
+  admin_id integer [ref: > U.id]
+  country_code char(2) [ref: > countries.code]
+}
+
+Table products {
+  id integer [pk, increment]
+  merchant_id integer [not null, ref: > merchants.id]
+  name varchar(200) [not null]
+  price decimal(10,2) [not null, default: 0]
+  status varchar(20) [default: 'draft', note: 'draft, active or retired']
+
+  indexes {
+    (merchant_id, status) [name: 'product_status']
+    name
+  }
+}
+
+Table orders {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > U.id]
+  status order_status [not null, default: 'created']
+  created_at timestamp [default: `now()`]
+}
+
+Table order_items {
+  order_id integer [ref: > orders.id]
+  product_id integer
+  quantity integer [default: 1]
+
+  indexes {
+    (order_id, product_id) [pk]
+  }
+}
+
+Ref: order_items.product_id > products.id [delete: cascade]
+
+TableGroup sales {
+  orders
+  order_items
+}
+
+TableGroup catalog [color: #2E9E6B] {
+  merchants
+  products
+}
+
+Note shipping {
+  'Shipping rules live in the logistics service, not in this schema.'
+}

@@ -1,0 +1,279 @@
+{
+  "name": "zovo-dbml-viewer",
+  "displayName": "DBML Viewer & ER Diagram (DBML Preview, SQL to ER Diagram, ERD)",
+  "description": "DBML viewer and ER diagram for VS Code: a live DBML preview beside the editor, SQL to ER diagram for PostgreSQL, MySQL, SQL Server and SQLite DDL, and Prisma schemas. Drag tables, search, zoom, click to jump to the line, copy as SVG. DBML syntax colors, problems, outline and go to definition. No network.",
+  "version": "0.1.0",
+  "publisher": "zovo",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1B2A4A",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theluckystrike/dbml-viewer-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/theluckystrike/dbml-viewer-vscode/issues"
+  },
+  "homepage": "https://github.com/theluckystrike/dbml-viewer-vscode#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "dbml",
+    "dbml viewer",
+    "dbml preview",
+    "er diagram",
+    "erd",
+    "sql to er diagram",
+    "erd viewer",
+    "database diagram",
+    "entity relationship diagram",
+    "database schema diagram",
+    "prisma er diagram",
+    "sql er diagram",
+    "dbdiagram",
+    "schema",
+    "postgresql",
+    "mysql",
+    "sql server",
+    "sqlite",
+    "prisma",
+    "ddl",
+    "data dictionary",
+    "schema diff",
+    "migration"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:dbml",
+    "onLanguage:sql",
+    "onLanguage:prisma"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "dbml",
+        "aliases": [
+          "DBML",
+          "dbml"
+        ],
+        "extensions": [
+          ".dbml"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/dbml-file.svg",
+          "dark": "./media/dbml-file.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dbml",
+        "scopeName": "source.dbml",
+        "path": "./syntaxes/dbml.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "dbmlViewer.openDiagram",
+        "title": "Open ER Diagram",
+        "category": "DBML Viewer",
+        "icon": "$(type-hierarchy-sub)"
+      },
+      {
+        "command": "dbmlViewer.openSample",
+        "title": "Open a sample DBML schema",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.openWalkthrough",
+        "title": "Get started",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.copySvg",
+        "title": "Copy the ER diagram as SVG",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.resetLayout",
+        "title": "Reset the diagram layout",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.exportSql",
+        "title": "Export SQL or DBML (Pro)",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.exportImage",
+        "title": "Export the diagram as PNG, SVG, PDF or data dictionary (Pro)",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.compare",
+        "title": "Compare two schemas and write migration SQL (Pro)",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.supportDeveloper",
+        "title": "Support the developer",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.moreViewers",
+        "title": "More free viewers",
+        "category": "DBML Viewer"
+      },
+      {
+        "command": "dbmlViewer.getPro",
+        "title": "Get Zovo Pro (USD 19 once, all 22 Zovo extensions)",
+        "category": "Zovo Pro"
+      },
+      {
+        "command": "dbmlViewer.payWithPayPal",
+        "title": "Pay for Zovo Pro with PayPal (USD 19, team of 5 USD 59)",
+        "category": "Zovo Pro"
+      },
+      {
+        "command": "dbmlViewer.unlockWithSponsors",
+        "title": "I already paid: unlock with GitHub Sponsors",
+        "category": "Zovo Pro"
+      },
+      {
+        "command": "dbmlViewer.enterLicenseKey",
+        "title": "Enter Zovo Pro license key",
+        "category": "Zovo Pro"
+      },
+      {
+        "command": "dbmlViewer.removeLicense",
+        "title": "Remove Zovo Pro from this editor",
+        "category": "Zovo Pro"
+      },
+      {
+        "command": "dbmlViewer.payByCard",
+        "title": "Pay for Zovo Pro by card (USD 19)",
+        "category": "Zovo Pro"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "dbmlViewer.openDiagram",
+          "when": "editorLangId == dbml || resourceExtname == .dbml || resourceExtname == .prisma || dbmlViewer.sqlHasTables",
+          "group": "navigation@40"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "dbmlViewer.openDiagram",
+          "when": "resourceExtname == .dbml || resourceExtname == .sql || resourceExtname == .ddl || resourceExtname == .prisma",
+          "group": "navigation@40"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dbmlViewer.openSample",
+          "when": "true"
+        },
+        {
+          "command": "dbmlViewer.exportSql",
+          "when": "config.dbmlViewer.showProTools"
+        },
+        {
+          "command": "dbmlViewer.exportImage",
+          "when": "config.dbmlViewer.showProTools"
+        },
+        {
+          "command": "dbmlViewer.compare",
+          "when": "config.dbmlViewer.showProTools"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DBML Viewer & ER Diagram",
+      "properties": {
+        "dbmlViewer.showProTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Export SQL, Export image and Compare schemas buttons (Zovo Pro tools, 3 free tries each). Turn off to hide them."
+        },
+        "dbmlViewer.showSupportLinks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the small Rate, More free viewers and support links at the bottom of the diagram."
+        },
+        "dbmlViewer.askForRating": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask once, after a few days of use, whether you want to rate the extension. Never after an error."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "dbmlViewer.start",
+        "title": "DBML Viewer & ER Diagram",
+        "description": "Draw DBML, SQL and Prisma schemas as an ER diagram beside the editor.",
+        "steps": [
+          {
+            "id": "open",
+            "title": "Open the ER diagram of a DBML file",
+            "description": "Open a .dbml file and click the diagram button in the editor title bar, or run DBML Viewer: Open ER Diagram. The diagram follows your edits as you type.\n[Open the sample DBML schema](command:dbmlViewer.openSample)",
+            "media": {
+              "markdown": "walkthrough/open.md"
+            }
+          },
+          {
+            "id": "sql",
+            "title": "SQL to ER diagram",
+            "description": "The same button shows up on SQL files that create tables: PostgreSQL, MySQL, SQL Server and SQLite dumps or migrations. Prisma schemas work too.\n[Open the sample SQL schema](command:dbmlViewer.openSample?%22sql%22)",
+            "media": {
+              "markdown": "walkthrough/sql.md"
+            }
+          },
+          {
+            "id": "arrange",
+            "title": "Arrange, search and copy",
+            "description": "Drag tables to arrange them (the layout is kept for each file), search a table, hover a line to see both ends, click a table to jump to its line, and copy the diagram as SVG.\n[Open the sample DBML schema](command:dbmlViewer.openSample)",
+            "media": {
+              "markdown": "walkthrough/arrange.md"
+            }
+          },
+          {
+            "id": "zovo-related",
+            "title": "Files that often come with database schemas",
+            "description": "If your project also has SQL databases or Graphviz graphs, these free Zovo extensions work with them. A link opens the extension page, and you choose there whether to install it.\n[Postgres and MySQL Client](command:extension.open?%5B%22zovo.zovo-sql-client%22%5D)\n[Graphviz Preview](command:extension.open?%5B%22zovo.zovo-graphviz-preview%22%5D)",
+            "media": {
+              "markdown": "walkthrough/related.md"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node scripts/test.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "~1.90.0"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679878"
+  }
+}
